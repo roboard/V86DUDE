@@ -1,0 +1,24 @@
+### V86DUDE 1.0 - 2013.12.27 ###
+
+* Add new protocol and checksum mechanism.
+* Always get the bootloader version to decide which protocol to use before transmitting.
+* Support the older bootloader. 
+
+
+
+### V86DUDE 0.4 - 2013.11.17 ###
+
+* Remove the file size limit to sketch programs.
+
+
+
+### V86DUDE 0.3 - 2013.11.12 ###
+
+* Support to upload the 86Duino bootloader.
+
+
+
+### V86DUDE 0.1 - 2013.10.18 ###
+
+* Support to upload the binary sketch.
+* Modify a bug to increase transmitting speed.
