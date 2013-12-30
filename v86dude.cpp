@@ -23,7 +23,6 @@ typedef struct usbcom {
     termios oldstate;
 } USBCOM_t;
 #elif defined (DMP_WIN32_MSVC)
-#include "stdafx.h"
 #include <conio.h>
 #include <windows.h>
 typedef struct usbcom {
