@@ -616,7 +616,7 @@ int main(int argc, char* argv[]) {
     FILE* src, *versionfile;
 	
 	if(argc < 4) return 1;
-    
+    if()
 	Serial = (USBCOM_t*) malloc(sizeof(USBCOM_t));
 	if(Serial == NULL) return 1;
 #if defined (DMP_LINUX) || defined (__APPLE__)
