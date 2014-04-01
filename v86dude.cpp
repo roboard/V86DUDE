@@ -614,9 +614,11 @@ int main(int argc, char* argv[]) {
 	char win_port[20];
     char filename[FNAME_BYTES];
     FILE* src, *versionfile;
+    bool standalone_mode = false;
 	
 	if(argc < 4) return 1;
-    if()
+    if(argc == 5 && strcmp("standalone", argv[4]) == 0) standalone_mode = true;
+    
 	Serial = (USBCOM_t*) malloc(sizeof(USBCOM_t));
 	if(Serial == NULL) return 1;
 #if defined (DMP_LINUX) || defined (__APPLE__)
@@ -638,6 +640,14 @@ int main(int argc, char* argv[]) {
 	getFilename(exe_file_path, filename);
 	
 	Init_UART(Serial);
+	
+	if(standalone_mode == true)
+	{
+		printf(" == Standalone mode == \n");
+		softreset_86duino(Serial);
+		wait_uart_state(Serial, UART_INACTIVE);
+		Init_UART(Serial);
+	}
 	
 	// Send a special filesize package to distinguish old/Hehuan bootloader
 	_version = special_get_version(Serial, GET_BOOTLOADER_VER, isLast);
