@@ -36,8 +36,8 @@
     #define DMP_DOS_WATCOM
 #endif
 
-#if defined(linux) && defined(__GNUC__)
-    #define DMP_LINUX
+#if defined(__linux__) || defined(__APPLE__) || defined(__OpenBSD__)
+    #define DMP_PCUNIX_GCC
 #endif
 
 #if defined(_MSC_VER) //&& defined(_M_IX86)
@@ -73,7 +73,7 @@
 #elif defined(DMP_DOS_DJGPP)
     //#define __dmp_inline(rtype)     static __INLINE__ rtype
     #define __dmp_inline(rtype)     static __inline__ rtype
-#elif defined(DMP_LINUX_GCC)
+#elif defined(DMP_PCUNIX_GCC)
     // note: GCC would always do inline-expansion for "static inline"
     #define __dmp_inline(rtype)     static __inline__ rtype
 #elif defined(DMP_WINCE_MSVC) || defined(DMP_WIN32_MSVC)
