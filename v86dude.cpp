@@ -30,7 +30,7 @@
 #define UART_INACTIVE    (0x02)
 #define COM_TIMEOUT      (8000L)  // timeout = 8s
 
-#if defined (DMP_LINUX) || defined (__APPLE__)
+#if defined (DMP_PCUNIX_GCC)
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
@@ -58,7 +58,7 @@ typedef struct usbcom {
 unsigned long timer_nowtime(void) { //in ms
 #if defined(DMP_WIN32_MSVC) || defined(DMP_WINCE_MSVC)
 	return GetTickCount();
-#elif defined(DMP_LINUX) || defined (__APPLE__)
+#elif defined(DMP_PCUNIX_GCC)
     static bool usetimer = false;
     static unsigned long long inittime;
     struct tms cputime;
@@ -85,7 +85,7 @@ void wait_uart_state(USBCOM_t* com, int state) {
 	{
 		if(timer_nowtime() > now) {printf("Wait COM port to timeout\n"); free((void*)com); exit(1);}
         
-#if defined (DMP_LINUX) || defined (__APPLE__)
+#if defined (DMP_PCUNIX_GCC)
         com->fp = open(com->port, O_RDWR | O_NOCTTY | O_NONBLOCK);
         if(state == UART_INACTIVE)
         {if(com->fp < 0) break; else close(com->fp);}
@@ -109,7 +109,7 @@ void wait_uart_state(USBCOM_t* com, int state) {
 
 USBCOM_t* Init_UART(USBCOM_t* com) {
 	wait_uart_state(com, UART_ACTIVE);
-#if defined (DMP_LINUX) || defined (__APPLE__)
+#if defined (DMP_PCUNIX_GCC)
     if (tcgetattr(com->fp, &(com->oldstate)) < 0)
         printf("fail to get termios settings\n");
     
@@ -172,7 +172,7 @@ USBCOM_t* Init_UART(USBCOM_t* com) {
 
 void Close_UART(USBCOM_t* com) {
 	if(com == NULL) return;
-#if defined (DMP_LINUX) || defined (__APPLE__)
+#if defined (DMP_PCUNIX_GCC)
     //tcsetattr(com->fp, TCSANOW, &(com->oldstate));
     close(com->fp);
 #elif defined (DMP_WIN32_MSVC)
@@ -182,7 +182,7 @@ void Close_UART(USBCOM_t* com) {
 
 static void softreset_86duino(USBCOM_t* com) {
 	if(com == NULL) return;
-#if defined (DMP_LINUX) || defined (__APPLE__)
+#if defined (DMP_PCUNIX_GCC)
     //tcsetattr(com->fp, TCSANOW, &(com->oldstate));
 	cfsetospeed(&(com->newstate), B1200);
 	cfsetispeed(&(com->newstate), B1200);
@@ -248,7 +248,7 @@ static bool send_package(USBCOM_t* com, unsigned char* buf, int bsize) {
         
         for (nowtime = timer_nowtime(); bsize2 > 0; buf += numbytes, bsize2 -= numbytes, bsize -= numbytes)
         {
-#if defined (DMP_LINUX) || defined (__APPLE__)
+#if defined (DMP_PCUNIX_GCC)
             if((numbytes = write(com->fp, buf, bsize2)) == -1) numbytes = 0;
 #elif defined (DMP_WIN32_MSVC)
             WriteFile(com->ur, buf, bsize2, (LPDWORD)&numbytes, NULL);
@@ -268,7 +268,7 @@ static bool send_package(USBCOM_t* com, unsigned char* buf, int bsize) {
 		}
 	}
 	
-#if defined (DMP_LINUX) || defined (__APPLE__)
+#if defined (DMP_PCUNIX_GCC)
     if(tcdrain(com->fp) < 0)
     {
         printf("tcdrain() fails\n");
@@ -288,7 +288,7 @@ static bool send_package(USBCOM_t* com, unsigned char* buf, int bsize) {
 static bool receive_package(USBCOM_t* com, unsigned char* buf, int bsize) {
     int numbytes = 0;
 
-#if defined (DMP_LINUX) || defined (__APPLE__)
+#if defined (DMP_PCUNIX_GCC)
     unsigned long nowtime = timer_nowtime();
     while(bsize > 0)
     {
@@ -643,7 +643,7 @@ int main(int argc, char* argv[]) {
     
 	Serial = (USBCOM_t*) malloc(sizeof(USBCOM_t));
 	if(Serial == NULL) return 1;
-#if defined (DMP_LINUX) || defined (__APPLE__)
+#if defined (DMP_PCUNIX_GCC)
 	Serial->port = argv[1];    
 #elif defined (DMP_WIN32_MSVC)
     win_port[0] = '\\'; win_port[1] = '\\'; win_port[2] = '.'; win_port[3] = '\\';
