@@ -1,3 +1,9 @@
+### V86DUDE 1.0 - 2016.08.26 ###
+
+* Fix a bug for long filename (.exe) over 32 Characters.
+
+
+
 ### V86DUDE 1.0 - 2013.12.27 ###
 
 * Add new protocol and checksum mechanism.

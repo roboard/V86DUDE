@@ -1,25 +1,3 @@
-/*
-  v86dude.cpp - 86Duino uploader
-  Part of the 86Duino project - http://www.86duino.com/
-
-  Copyright (c) 2013
-  Android Lin <acen@dmp.com.tw>
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software Foundation,
-  Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
-
 #include "dmpcfg.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -107,8 +85,8 @@ void wait_uart_state(USBCOM_t* com, int state) {
 	}
 }
 
-USBCOM_t* Init_UART(USBCOM_t* com) {
-	wait_uart_state(com, UART_ACTIVE);
+USBCOM_t* Init_UART(USBCOM_t* com, bool wait) {
+	if(wait == true) wait_uart_state(com, UART_ACTIVE);
 #if defined (DMP_LINUX) || defined (__APPLE__)
     if (tcgetattr(com->fp, &(com->oldstate)) < 0)
         printf("fail to get termios settings\n");
@@ -345,18 +323,11 @@ void check_error(unsigned short errorcode) {
 		printf("Bootloader: unknown error code\n");
 }
 
-#define FNAME_BYTES    (32)
+/*
 void getFilename(char* exe_file_path, char* filename) {
-	int i, j;
-	for(i=0; i<FNAME_BYTES; i++) filename[i] = '\0';
-	for(i=0, j=0; exe_file_path[i] != '\0'; i++, j++)
-	{
-		if(exe_file_path[i] == '/' || exe_file_path[i] == '\\') {j = -1; continue;}
-		filename[j] = exe_file_path[i];
-	}
-	for(;j < FNAME_BYTES; j++)
-		filename[j] = '\0';
+
 }
+*/
 
 void getFilepath(char* path, char* real_path) {
 	int i, j;
@@ -634,10 +605,12 @@ int main(int argc, char* argv[]) {
 	USBCOM_t* Serial;
 	char* exe_file_path = NULL, *versionfilepath = NULL;
 	char win_port[20];
-    char filename[FNAME_BYTES];
+    char filename[FNAME_BYTES] = {'\0'};
     FILE* src, *versionfile;
+    bool standalone_mode = false;
 	
 	if(argc < 4) return 1;
+    if(argc == 5 && strcmp("standalone", argv[4]) == 0) standalone_mode = true;
     
 	Serial = (USBCOM_t*) malloc(sizeof(USBCOM_t));
 	if(Serial == NULL) return 1;
@@ -648,18 +621,25 @@ int main(int argc, char* argv[]) {
 	for(i=0; argv[1][i] != '\0'; i++)
 		win_port[4+i] = argv[1][i];
 	win_port[4+i] = '\0';
-	Serial->port = win_port;
+	Serial->port = &win_port[0];
 	Serial->char_size = i+5;
 #endif
 
 	command = (unsigned short) atoi(argv[2]);
 	exe_file_path = argv[3];
 	src = fopen(exe_file_path, "rb");
-	
 	if((filesize = Cal_filesize(exe_file_path)) == 0L) return 1;
-	getFilename(exe_file_path, filename);
+	// getFilename(argv[3], &filename[0]);
 	
-	Init_UART(Serial);
+	Init_UART(Serial, true);
+	
+	if(standalone_mode == true)
+	{
+		printf(" == Standalone mode == \n");
+		softreset_86duino(Serial);
+		wait_uart_state(Serial, UART_INACTIVE);
+		Init_UART(Serial, true);
+	}
 	
 	// Send a special filesize package to distinguish old/Hehuan bootloader
 	_version = special_get_version(Serial, GET_BOOTLOADER_VER, isLast);
@@ -671,11 +651,11 @@ int main(int argc, char* argv[]) {
 		// For old bootloader version, reset it again and use old protocol to write file
 		// The 86Duino is running use program, so first need to reboot it
 		// Since 86Duino usb connect again, need to call Init_UART()
-		Init_UART(Serial);
+		Init_UART(Serial, true);
 	    printf("Bootloader version: Beta 0.9\n");
 	    softreset_86duino(Serial);
 		wait_uart_state(Serial, UART_INACTIVE);
-		Init_UART(Serial);
+		Init_UART(Serial, true);
 		if(command == BURN_PROGRAM)         command = 1;
 		else if(command == BURN_BOOTLOADER) command = 2;
 		oldversion_writefile(Serial, src, command, filesize);
@@ -822,5 +802,5 @@ MAIN_END:
 	fclose(src);
 	free((void*)Serial);
     
-	return error;
+	return (error == 0) ? 0 : 1;
 }
